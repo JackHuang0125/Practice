@@ -105,3 +105,62 @@ def calculate_balance_summary(db: Session):
         "spendable_balance": Decimal(spendable_balance),
         "pockets": pockets,
     }
+
+
+def calculate_pocket_detail(db: Session, pocket_id):
+    user = get_default_user(db)
+
+    pocket = (
+        db.query(BudgetPocket)
+        .filter(
+            BudgetPocket.id == pocket_id,
+            BudgetPocket.user_id == user.id,
+            BudgetPocket.is_active == True
+        )
+        .first()
+    )
+
+    if not pocket:
+        raise ValueError("Pocket not found.")
+
+    amount = Decimal(pocket.amount)
+    spent_amount = Decimal(pocket.spent_amount)
+    remaining_amount = amount - spent_amount
+
+    if amount == 0:
+        usage_ratio = Decimal("0.00")
+    else:
+        usage_ratio = (spent_amount / amount).quantize(Decimal("0.01"))
+
+    transactions = (
+        db.query(Transaction)
+        .filter(
+            Transaction.user_id == user.id,
+            Transaction.pocket_id == pocket.id
+        )
+        .order_by(Transaction.created_at.desc())
+        .all()
+    )
+
+    transaction_items = []
+    for tx in transactions:
+        transaction_items.append({
+            "id": tx.id,
+            "account_id": tx.account_id,
+            "type": tx.type,
+            "amount": Decimal(tx.amount),
+            "note": tx.note,
+            "description": tx.description,
+            "created_at": tx.created_at,
+        })
+
+    return {
+        "id": pocket.id,
+        "name": pocket.name,
+        "amount": amount,
+        "spent_amount": spent_amount,
+        "remaining_amount": remaining_amount,
+        "usage_ratio": usage_ratio,
+        "status": get_pocket_status(usage_ratio),
+        "transactions": transaction_items,
+    }

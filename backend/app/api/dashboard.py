@@ -1,9 +1,11 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.services.balance_engine import calculate_balance_summary
-from app.schemas.dashboard import DashboardHomeResponse
+from app.services.balance_engine import calculate_balance_summary, calculate_pocket_detail
+from app.schemas.dashboard import DashboardHomeResponse, DashboardPocketDetailResponse
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -15,3 +17,12 @@ def get_dashboard_home(db: Session = Depends(get_db)):
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/pocket/{pocket_id}", response_model=DashboardPocketDetailResponse)
+def get_dashboard_pocket_detail(pocket_id: UUID, db: Session = Depends(get_db)):
+    try:
+        result = calculate_pocket_detail(db, pocket_id)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
