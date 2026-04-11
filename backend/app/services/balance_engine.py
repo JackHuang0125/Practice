@@ -27,14 +27,12 @@ def calculate_balance_summary(db: Session):
         .scalar()
     )
 
-    credit_card_spend = (
-        db.query(func.coalesce(func.sum(Transaction.amount), 0))
-        .join(Account, Transaction.account_id == Account.id)
+    credit_card_used = (
+        db.query(func.coalesce(func.sum(Account.current_balance), 0))
         .filter(
-            Transaction.user_id == user.id,
-            Transaction.type == "card_spend",
-            Account.type == "credit_card",
-            Account.is_active == True
+            Account.user_id == user.id,
+            Account.is_active == True,
+            Account.type == "credit_card"
         )
         .scalar()
     )
@@ -57,12 +55,12 @@ def calculate_balance_summary(db: Session):
         .scalar()
     )
 
-    spendable_balance = Decimal(cash_bank_balance) - Decimal(credit_card_spend)
+    spendable_balance = Decimal(cash_bank_balance) - Decimal(credit_card_used)
 
     return {
         "cash_bank_balance": Decimal(cash_bank_balance),
-        "credit_card_spend": Decimal(credit_card_spend),
+        "credit_card_spend": Decimal(credit_card_used),
         "income_total": Decimal(income_total),
         "expense_total": Decimal(expense_total),
-        "spendable_balance": spendable_balance
+        "spendable_balance": Decimal(spendable_balance),
     }

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.account import Account
 from app.models.user import User
-from app.schemas.account import AccountCreate
+from app.schemas.account import AccountCreate, AccountResponse
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 
@@ -21,22 +21,9 @@ def get_default_user(db: Session) -> User:
     return user
 
 
-@router.post("/")
+@router.post("/", response_model=AccountResponse)
 def create_account(payload: AccountCreate, db: Session = Depends(get_db)):
     user = get_default_user(db)
-
-    if payload.type == "credit_card":
-        if payload.credit_limit is None:
-            raise HTTPException(
-                status_code=400,
-                detail="credit_limit is required for credit_card account."
-            )
-    else:
-        if payload.statement_day is not None or payload.due_day is not None:
-            raise HTTPException(
-                status_code=400,
-                detail="statement_day and due_day are only for credit_card account."
-            )
 
     account = Account(
         user_id=user.id,
@@ -55,7 +42,7 @@ def create_account(payload: AccountCreate, db: Session = Depends(get_db)):
     return account
 
 
-@router.get("/")
+@router.get("/", response_model=list[AccountResponse])
 def get_accounts(db: Session = Depends(get_db)):
     user = get_default_user(db)
     accounts = (
@@ -66,7 +53,7 @@ def get_accounts(db: Session = Depends(get_db)):
     return accounts
 
 
-@router.get("/{account_id}")
+@router.get("/{account_id}", response_model=AccountResponse)
 def get_account(account_id: UUID, db: Session = Depends(get_db)):
     user = get_default_user(db)
     account = (

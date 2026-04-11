@@ -11,6 +11,9 @@ class TransactionRuleError(ValueError):
 
 
 def validate_transaction_account(account: Account, tx_type: str) -> None:
+    if not account.is_active:
+        raise TransactionRuleError("Account is inactive.")
+
     if tx_type == "income" and account.type not in ["cash", "bank"]:
         raise TransactionRuleError("Income transaction must use a cash or bank account.")
 
@@ -21,13 +24,33 @@ def validate_transaction_account(account: Account, tx_type: str) -> None:
         raise TransactionRuleError("Card spend transaction must use a credit card account.")
 
 
+def validate_transaction_amount(account: Account, tx_type: str, amount: Decimal) -> None:
+    if amount <= 0:
+        raise TransactionRuleError("Amount must be greater than 0.")
+
+    if tx_type == "expense":
+        if Decimal(account.current_balance) < amount:
+            raise TransactionRuleError("Insufficient balance for expense transaction.")
+
+    if tx_type == "card_spend":
+        if account.credit_limit is None:
+            raise TransactionRuleError("Credit card account missing credit_limit.")
+
+        used_amount = Decimal("0.00")
+        if account.current_balance is not None:
+            used_amount = Decimal(account.current_balance)
+
+        if used_amount + amount > Decimal(account.credit_limit):
+            raise TransactionRuleError("Credit limit exceeded.")
+
+
 def apply_balance_change(account: Account, tx_type: str, amount: Decimal) -> None:
     if tx_type == "income":
         account.current_balance = Decimal(account.current_balance) + amount
     elif tx_type == "expense":
         account.current_balance = Decimal(account.current_balance) - amount
     elif tx_type == "card_spend":
-        pass
+        account.current_balance = Decimal(account.current_balance) + amount
 
 
 def create_transaction(db: Session, payload: TransactionCreate) -> Transaction:
@@ -41,8 +64,7 @@ def create_transaction(db: Session, payload: TransactionCreate) -> Transaction:
     validate_transaction_account(account, payload.type.value)
 
     amount = Decimal(payload.amount)
-    if amount <= 0:
-        raise TransactionRuleError("Amount must be greater than 0.")
+    validate_transaction_amount(account, payload.type.value, amount)
 
     tx = Transaction(
         user_id=payload.user_id,
