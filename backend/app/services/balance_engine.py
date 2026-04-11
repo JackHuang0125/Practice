@@ -164,3 +164,59 @@ def calculate_pocket_detail(db: Session, pocket_id):
         "status": get_pocket_status(usage_ratio),
         "transactions": transaction_items,
     }
+
+def calculate_account_detail(db: Session, account_id):
+    user = get_default_user(db)
+
+    account = (
+        db.query(Account)
+        .filter(
+            Account.id == account_id,
+            Account.user_id == user.id,
+            Account.is_active == True
+        )
+        .first()
+    )
+
+    if not account:
+        raise ValueError("Account not found.")
+
+    transactions = (
+        db.query(Transaction)
+        .filter(
+            Transaction.user_id == user.id,
+            Transaction.account_id == account.id
+        )
+        .order_by(Transaction.created_at.desc())
+        .all()
+    )
+
+    transaction_items = []
+    for tx in transactions:
+        transaction_items.append({
+            "id": tx.id,
+            "pocket_id": tx.pocket_id,
+            "type": tx.type,
+            "amount": Decimal(tx.amount),
+            "note": tx.note,
+            "description": tx.description,
+            "created_at": tx.created_at,
+        })
+
+    available_credit = None
+    if account.type == "credit_card" and account.credit_limit is not None:
+        available_credit = Decimal(account.credit_limit) - Decimal(account.current_balance)
+
+    return {
+        "id": account.id,
+        "name": account.name,
+        "institution_name": account.institution_name,
+        "type": account.type,
+        "current_balance": Decimal(account.current_balance),
+        "credit_limit": Decimal(account.credit_limit) if account.credit_limit is not None else None,
+        "available_credit": available_credit,
+        "statement_day": account.statement_day,
+        "due_day": account.due_day,
+        "is_active": account.is_active,
+        "transactions": transaction_items,
+    }

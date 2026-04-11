@@ -41,6 +41,33 @@ class DashboardPocketDetailResponse(BaseModel):
     transactions: list[PocketTransactionItem]
 
 
+class AccountTransactionItem(BaseModel):
+    id: UUID
+    pocket_id: UUID | None = None
+    type: str
+    amount: Decimal
+    note: str | None = None
+    description: str | None = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class DashboardAccountDetailResponse(BaseModel):
+    id: UUID
+    name: str
+    institution_name: str | None = None
+    type: str
+    current_balance: Decimal
+    credit_limit: Decimal | None = None
+    available_credit: Decimal | None = None
+    statement_day: int | None = None
+    due_day: int | None = None
+    is_active: bool
+    transactions: list[AccountTransactionItem]
+
+
 class DashboardHomeResponse(BaseModel):
     cash_bank_balance: Decimal
     credit_card_spend: Decimal
