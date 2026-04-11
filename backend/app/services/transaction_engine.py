@@ -20,8 +20,8 @@ def validate_transaction_account(account: Account, tx_type: str) -> None:
     if tx_type == "expense" and account.type not in ["cash", "bank"]:
         raise TransactionRuleError("Expense transaction must use a cash or bank account.")
 
-    if tx_type == "card_spend" and account.type != "credit_card":
-        raise TransactionRuleError("Card spend transaction must use a credit card account.")
+    if tx_type in ["card_spend", "card_payment"] and account.type != "credit_card":
+        raise TransactionRuleError(f"{tx_type} transaction must use a credit card account.")
 
 
 def validate_transaction_amount(account: Account, tx_type: str, amount: Decimal) -> None:
@@ -36,12 +36,14 @@ def validate_transaction_amount(account: Account, tx_type: str, amount: Decimal)
         if account.credit_limit is None:
             raise TransactionRuleError("Credit card account missing credit_limit.")
 
-        used_amount = Decimal("0.00")
-        if account.current_balance is not None:
-            used_amount = Decimal(account.current_balance)
-
+        used_amount = Decimal(account.current_balance or 0)
         if used_amount + amount > Decimal(account.credit_limit):
             raise TransactionRuleError("Credit limit exceeded.")
+
+    if tx_type == "card_payment":
+        used_amount = Decimal(account.current_balance or 0)
+        if amount > used_amount:
+            raise TransactionRuleError("Card payment cannot exceed current used credit.")
 
 
 def apply_balance_change(account: Account, tx_type: str, amount: Decimal) -> None:
@@ -51,6 +53,8 @@ def apply_balance_change(account: Account, tx_type: str, amount: Decimal) -> Non
         account.current_balance = Decimal(account.current_balance) - amount
     elif tx_type == "card_spend":
         account.current_balance = Decimal(account.current_balance) + amount
+    elif tx_type == "card_payment":
+        account.current_balance = Decimal(account.current_balance) - amount
 
 
 def create_transaction(db: Session, payload: TransactionCreate) -> Transaction:

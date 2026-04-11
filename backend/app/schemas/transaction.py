@@ -4,12 +4,11 @@ from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel
 
-
 class TransactionType(str, Enum):
     income = "income"
     expense = "expense"
     card_spend = "card_spend"
-
+    card_payment = "card_payment"
 
 class TransactionCreate(BaseModel):
     user_id: UUID
@@ -18,7 +17,6 @@ class TransactionCreate(BaseModel):
     amount: Decimal
     note: str | None = None
     description: str | None = None
-
 
 class TransactionResponse(BaseModel):
     id: UUID
