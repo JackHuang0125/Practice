@@ -5,6 +5,7 @@ from sqlalchemy import func
 from app.models.user import User
 from app.models.account import Account
 from app.models.transaction import Transaction
+from app.models.pocket import BudgetPocket
 
 
 def get_default_user(db: Session) -> User:
@@ -12,6 +13,14 @@ def get_default_user(db: Session) -> User:
     if not user:
         raise ValueError("No default user found.")
     return user
+
+
+def get_pocket_status(usage_ratio: Decimal) -> str:
+    if usage_ratio < Decimal("0.8"):
+        return "green"
+    elif usage_ratio <= Decimal("1.0"):
+        return "yellow"
+    return "red"
 
 
 def calculate_balance_summary(db: Session):
@@ -55,6 +64,37 @@ def calculate_balance_summary(db: Session):
         .scalar()
     )
 
+    pocket_rows = (
+        db.query(BudgetPocket)
+        .filter(
+            BudgetPocket.user_id == user.id,
+            BudgetPocket.is_active == True
+        )
+        .order_by(BudgetPocket.created_at.desc())
+        .all()
+    )
+
+    pockets = []
+    for pocket in pocket_rows:
+        amount = Decimal(pocket.amount)
+        spent_amount = Decimal(pocket.spent_amount)
+        remaining_amount = amount - spent_amount
+
+        if amount == 0:
+            usage_ratio = Decimal("0.00")
+        else:
+            usage_ratio = (spent_amount / amount).quantize(Decimal("0.01"))
+
+        pockets.append({
+            "id": pocket.id,
+            "name": pocket.name,
+            "amount": amount,
+            "spent_amount": spent_amount,
+            "remaining_amount": remaining_amount,
+            "usage_ratio": usage_ratio,
+            "status": get_pocket_status(usage_ratio),
+        })
+
     spendable_balance = Decimal(cash_bank_balance) - Decimal(credit_card_used)
 
     return {
@@ -63,4 +103,5 @@ def calculate_balance_summary(db: Session):
         "income_total": Decimal(income_total),
         "expense_total": Decimal(expense_total),
         "spendable_balance": Decimal(spendable_balance),
+        "pockets": pockets,
     }
