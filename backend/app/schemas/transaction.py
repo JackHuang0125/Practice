@@ -13,6 +13,7 @@ class TransactionType(str, Enum):
 class TransactionCreate(BaseModel):
     user_id: UUID
     account_id: UUID
+    pocket_id: UUID | None = None
     type: TransactionType
     amount: Decimal
     note: str | None = None
@@ -22,6 +23,7 @@ class TransactionResponse(BaseModel):
     id: UUID
     user_id: UUID
     account_id: UUID
+    pocket_id: UUID | None = None
     type: TransactionType
     amount: Decimal
     note: str | None = None

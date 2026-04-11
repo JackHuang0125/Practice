@@ -19,4 +19,5 @@ class BudgetPocket(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    user = relationship("User")
+    user = relationship("User", back_populates="pockets")
+    transactions = relationship("Transaction", back_populates="pocket")

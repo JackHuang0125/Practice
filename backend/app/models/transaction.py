@@ -13,6 +13,8 @@ class Transaction(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
+    pocket_id = Column(UUID(as_uuid=True), ForeignKey("budget_pockets.id"), nullable=True)
+
     type = Column(String, nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
     note = Column(Text, nullable=True)
@@ -21,3 +23,4 @@ class Transaction(Base):
 
     user = relationship("User", back_populates="transactions")
     account = relationship("Account", back_populates="transactions")
+    pocket = relationship("BudgetPocket", back_populates="transactions")
