@@ -5,12 +5,14 @@ from app.models.user import User
 from app.models.account import Account
 from app.models.transaction import Transaction
 from app.models.pocket import BudgetPocket
+from app.models.fund import ReserveFund
 
 from app.api.user import router as user_router
 from app.api.account import router as account_router
 from app.api.transaction import router as transaction_router
 from app.api.dashboard import router as dashboard_router
 from app.api.pocket import router as pocket_router
+from app.api.fund import router as fund_router
 
 app = FastAPI(title="FlowPockets API")
 
@@ -21,6 +23,7 @@ app.include_router(account_router)
 app.include_router(transaction_router)
 app.include_router(dashboard_router)
 app.include_router(pocket_router)
+app.include_router(fund_router)
 
 @app.get("/")
 def read_root():
