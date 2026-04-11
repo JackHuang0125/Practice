@@ -1,7 +1,9 @@
+from uuid import UUID
 from decimal import Decimal
 from typing import Optional, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
+
 
 class AccountCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
@@ -50,10 +52,11 @@ class AccountCreate(BaseModel):
             if self.due_day is not None:
                 raise ValueError("due_day is only for credit_card account")
         return self
-    
+
+
 class AccountResponse(BaseModel):
-    id: str
-    user_id: str
+    id: UUID
+    user_id: UUID
     name: str
     type: str
     institution_name: Optional[str]
