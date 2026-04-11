@@ -15,6 +15,18 @@ class PocketCreate(BaseModel):
             raise ValueError("amount fields must be >= 0")
         return v
 
+class PocketUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    amount: Decimal | None = None
+    spent_amount: Decimal | None = None
+
+    @field_validator("amount", "spent_amount")
+    @classmethod
+    def validate_optional_amounts(cls, v):
+        if v is not None and v < 0:
+            raise ValueError("amount fields must be >= 0")
+        return v
+    
 class PocketResponse(BaseModel):
     id: UUID
     user_id: UUID
