@@ -81,6 +81,21 @@ class DashboardAccountDetailResponse(BaseModel):
     transactions: list[AccountTransactionItem]
 
 
+class DashboardFundDetailResponse(BaseModel):
+    id: UUID
+    name: str
+    target_amount: Decimal
+    current_amount: Decimal
+    monthly_contribution: Decimal
+    remaining_amount: Decimal
+    progress_ratio: Decimal
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class DashboardHomeResponse(BaseModel):
     cash_bank_balance: Decimal
     credit_card_spend: Decimal

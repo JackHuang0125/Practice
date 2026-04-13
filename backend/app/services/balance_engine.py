@@ -252,3 +252,41 @@ def calculate_account_detail(db: Session, account_id):
         "is_active": account.is_active,
         "transactions": transaction_items,
     }
+
+def calculate_fund_detail(db: Session, fund_id):
+    user = get_default_user(db)
+
+    fund = (
+        db.query(ReserveFund)
+        .filter(
+            ReserveFund.id == fund_id,
+            ReserveFund.user_id == user.id,
+            ReserveFund.is_active == True
+        )
+        .first()
+    )
+
+    if not fund:
+        raise ValueError("Fund not found.")
+
+    target_amount = Decimal(fund.target_amount)
+    current_amount = Decimal(fund.current_amount)
+    monthly_contribution = Decimal(fund.monthly_contribution)
+    remaining_amount = target_amount - current_amount
+
+    if target_amount == 0:
+        progress_ratio = Decimal("0.00")
+    else:
+        progress_ratio = (current_amount / target_amount).quantize(Decimal("0.01"))
+
+    return {
+        "id": fund.id,
+        "name": fund.name,
+        "target_amount": target_amount,
+        "current_amount": current_amount,
+        "monthly_contribution": monthly_contribution,
+        "remaining_amount": remaining_amount,
+        "progress_ratio": progress_ratio,
+        "is_active": fund.is_active,
+        "created_at": fund.created_at,
+    }
