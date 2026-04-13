@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.fund import ReserveFund
 from app.schemas.fund import FundCreate, FundUpdate, FundResponse
+from app.schemas.common import MessageResponse
 
 router = APIRouter(prefix="/funds", tags=["funds"])
 
@@ -93,7 +94,7 @@ def update_fund(fund_id: UUID, payload: FundUpdate, db: Session = Depends(get_db
     return fund
 
 
-@router.delete("/{fund_id}")
+@router.delete("/{fund_id}", response_model=MessageResponse)
 def delete_fund(fund_id: UUID, db: Session = Depends(get_db)):
     user = get_default_user(db)
     fund = get_user_fund_or_404(db, user.id, fund_id)

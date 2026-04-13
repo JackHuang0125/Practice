@@ -10,19 +10,14 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.post("/", response_model=UserResponse)
 def create_user(payload: UserCreate, db: Session = Depends(get_db)):
-    try:
-        user = User(
-            name=payload.name,
-            currency=payload.currency
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        return user
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-
+    user = User(
+        name=payload.name,
+        currency=payload.currency
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 @router.get("/", response_model=list[UserResponse])
 def get_users(db: Session = Depends(get_db)):

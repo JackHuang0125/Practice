@@ -23,27 +23,23 @@ def get_default_user(db: Session) -> User:
 
 @router.post("/", response_model=AccountResponse)
 def create_account(payload: AccountCreate, db: Session = Depends(get_db)):
-    try:
-        user = get_default_user(db)
+    user = get_default_user(db)
 
-        account = Account(
-            user_id=user.id,
-            name=payload.name,
-            type=payload.type,
-            institution_name=payload.institution_name,
-            current_balance=payload.current_balance,
-            credit_limit=payload.credit_limit,
-            statement_day=payload.statement_day,
-            due_day=payload.due_day,
-        )
+    account = Account(
+        user_id=user.id,
+        name=payload.name,
+        type=payload.type,
+        institution_name=payload.institution_name,
+        current_balance=payload.current_balance,
+        credit_limit=payload.credit_limit,
+        statement_day=payload.statement_day,
+        due_day=payload.due_day,
+    )
 
-        db.add(account)
-        db.commit()
-        db.refresh(account)
-        return account
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+    db.add(account)
+    db.commit()
+    db.refresh(account)
+    return account
 
 
 @router.get("/", response_model=list[AccountResponse])

@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.pocket import BudgetPocket
 from app.schemas.pocket import PocketCreate, PocketUpdate, PocketResponse
+from app.schemas.common import MessageResponse
 
 router = APIRouter(prefix="/pockets", tags=["pockets"])
 
@@ -90,7 +91,7 @@ def update_pocket(pocket_id: UUID, payload: PocketUpdate, db: Session = Depends(
     return pocket
 
 
-@router.delete("/{pocket_id}")
+@router.delete("/{pocket_id}", response_model=MessageResponse)
 def delete_pocket(pocket_id: UUID, db: Session = Depends(get_db)):
     user = get_default_user(db)
     pocket = get_user_pocket_or_404(db, user.id, pocket_id)
