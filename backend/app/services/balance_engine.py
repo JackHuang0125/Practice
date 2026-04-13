@@ -6,7 +6,7 @@ from app.models.user import User
 from app.models.account import Account
 from app.models.transaction import Transaction
 from app.models.pocket import BudgetPocket
-
+from app.models.fund import ReserveFund
 
 def get_default_user(db: Session) -> User:
     user = db.query(User).first()
@@ -94,6 +94,37 @@ def calculate_balance_summary(db: Session):
             "usage_ratio": usage_ratio,
             "status": get_pocket_status(usage_ratio),
         })
+    fund_rows = (
+        db.query(ReserveFund)
+        .filter(
+            ReserveFund.user_id == user.id,
+            ReserveFund.is_active == True
+        )
+        .order_by(ReserveFund.created_at.desc())
+        .all()
+    )
+
+    funds = []
+    for fund in fund_rows:
+        target_amount = Decimal(fund.target_amount)
+        current_amount = Decimal(fund.current_amount)
+        monthly_contribution = Decimal(fund.monthly_contribution)
+        remaining_amount = target_amount - current_amount
+
+        if target_amount == 0:
+            progress_ratio = Decimal("0.00")
+        else:
+            progress_ratio = (current_amount / target_amount).quantize(Decimal("0.01"))
+
+        funds.append({
+            "id": fund.id,
+            "name": fund.name,
+            "target_amount": target_amount,
+            "current_amount": current_amount,
+            "monthly_contribution": monthly_contribution,
+            "remaining_amount": remaining_amount,
+            "progress_ratio": progress_ratio,
+        })
 
     spendable_balance = Decimal(cash_bank_balance) - Decimal(credit_card_used)
 
@@ -104,6 +135,7 @@ def calculate_balance_summary(db: Session):
         "expense_total": Decimal(expense_total),
         "spendable_balance": Decimal(spendable_balance),
         "pockets": pockets,
+        "funds": funds,
     }
 
 

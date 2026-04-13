@@ -17,6 +17,19 @@ class PocketSummary(BaseModel):
         from_attributes = True
 
 
+class FundSummary(BaseModel):
+    id: UUID
+    name: str
+    target_amount: Decimal
+    current_amount: Decimal
+    monthly_contribution: Decimal
+    remaining_amount: Decimal
+    progress_ratio: Decimal
+
+    class Config:
+        from_attributes = True
+
+
 class PocketTransactionItem(BaseModel):
     id: UUID
     account_id: UUID
@@ -75,3 +88,4 @@ class DashboardHomeResponse(BaseModel):
     expense_total: Decimal
     spendable_balance: Decimal
     pockets: list[PocketSummary]
+    funds: list[FundSummary]
