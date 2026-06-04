@@ -75,3 +75,4 @@ from app.db import Base, engine
 from app.models.user import User
 from app.schemas.user import UserCreate
 
+http://127.0.0.1:8000/docs
